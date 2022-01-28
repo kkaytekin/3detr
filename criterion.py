@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
-from utils.box_util import generalized_box3d_iou
-from utils.dist import all_reduce_average
-from utils.misc import huber_loss
+from tridetr.utils.box_util import generalized_box3d_iou
+from tridetr.utils.dist import all_reduce_average
+from tridetr.utils.misc import huber_loss
 from scipy.optimize import linear_sum_assignment
 
 
@@ -93,7 +93,7 @@ class SetCriterion(nn.Module):
         self.matcher = matcher
         self.loss_weight_dict = loss_weight_dict
 
-        semcls_percls_weights = torch.ones(dataset_config.num_semcls + 1)
+        semcls_percls_weights = torch.ones(dataset_config.num_class + 1)
         semcls_percls_weights[-1] = loss_weight_dict["loss_no_object_weight"]
         del loss_weight_dict["loss_no_object_weight"]
         self.register_buffer("semcls_percls_weights", semcls_percls_weights)
@@ -165,7 +165,7 @@ class SetCriterion(nn.Module):
             gt_angle_label = targets["gt_angle_class_label"]
             gt_angle_residual = targets["gt_angle_residual_label"]
             gt_angle_residual_normalized = gt_angle_residual / (
-                np.pi / self.dataset_config.num_angle_bin
+                np.pi / self.dataset_config.num_heading_bin
             )
 
             # # Non vectorized version
@@ -373,6 +373,7 @@ class SetCriterion(nn.Module):
                 for interm_key in interm_loss_dict:
                     loss_dict[f"{interm_key}_{k}"] = interm_loss_dict[interm_key]
         return loss, loss_dict
+
 
 
 def build_criterion(args, dataset_config):
